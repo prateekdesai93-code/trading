@@ -359,10 +359,12 @@
   const TIER_A = { emaFast:9, emaMid:21, emaSlow:50, rsi:14, macdFast:12, macdSlow:26, macdSignal:9, boll:20, bollMult:2, stochK:14, stochSmoothK:3, stochSmoothD:3, rocPeriod:10, zPeriod:20, rangeLookback:60 };
   const TIER_B = { emaFast:5,  emaMid:10, emaSlow:20, rsi:10, macdFast:6,  macdSlow:13, macdSignal:5, boll:10, bollMult:2, stochK:7,  stochSmoothK:2, stochSmoothD:2, rocPeriod:5,  zPeriod:10, rangeLookback:20 };
   // Fast tier — 1m only. Standard 9/21/50-style periods would need ~50 minutes just for the
-  // slowest indicator to wake up; these shorter scalping-style periods get a full 7-indicator
-  // read within ~15 minutes of first opening the dashboard, which is what people actually expect
-  // to see "soon" without resorting to fake/backfilled history.
-  const TIER_F = { emaFast:3,  emaMid:8,  emaSlow:13, rsi:7,  macdFast:5,  macdSlow:10, macdSignal:4, boll:10, bollMult:2, stochK:5,  stochSmoothK:2, stochSmoothD:2, rocPeriod:3,  zPeriod:8,  rangeLookback:15 };
+  // slowest indicator to wake up. These are deliberately tiny, scalping-extreme periods so a
+  // full 7-indicator read appears within ~5 minutes of first opening the dashboard — the trade-off
+  // (chosen explicitly over a slower/steadier option) is more noise and more false flips, since an
+  // EMA(2)/RSI(3)-class reading has very little averaging behind it. Still built entirely from real
+  // live ticks, nothing backfilled.
+  const TIER_F = { emaFast:2,  emaMid:3,  emaSlow:5,  rsi:3,  macdFast:2,  macdSlow:3,  macdSignal:2, boll:5,  bollMult:2, stochK:3,  stochSmoothK:1, stochSmoothD:1, rocPeriod:2,  zPeriod:3,  rangeLookback:8 };
   function periodsFor(tf){ return tf.tier==="B" ? TIER_B : tf.tier==="F" ? TIER_F : TIER_A; }
   function minBars(p){
     return {
@@ -1130,7 +1132,7 @@
   document.getElementById("methodology-body").innerHTML = `
     <p>Every timeframe from <code>1m</code> to <code>1D</code> is built by resampling this dashboard's own live price polls into real OHLC bars — nothing is backfilled from a historical provider. <code>1M</code> and <code>1Y</code> are left as an explained empty state rather than faked, since a genuine multi-year candle history needs a paid/keyed data feed this build intentionally doesn't use.</p>
     <h4>Three indicator "speeds"</h4>
-    <p><b>1m</b> uses short, scalping-style periods (EMA 3/8/13, RSI 7, MACD 5/10/4, Bollinger 10, Stochastic 5/2/2) specifically so the very first tab you see has a complete 7-indicator read within roughly 15 minutes of opening the dashboard, instead of the ~50 minutes standard periods would need. <b>5m / 30m / 1H</b> use standard periods (EMA 9/21/50, RSI 14, MACD 12/26/9, Bollinger 20, Stochastic 14/3/3). <b>2H / 4H / 1D</b> use faster variants again (EMA 5/10/20, RSI 10, MACD 6/13/5, Bollinger 10, Stochastic 7/2/2) — the same logic traders use to compensate for higher timeframes otherwise taking days to accumulate enough bars. Shorter periods react faster but are noisier; that trade-off is why the dashboard opens on 1m by default and why the Overall Recommendation leans on whichever timeframes are actually ready rather than waiting for all nine.</p>
+    <p><b>1m</b> uses deliberately tiny periods (EMA 2/3/5, RSI 3, MACD 2/3/2, Bollinger 5, Stochastic 3/1/1) so the very first tab you see has a complete 7-indicator read within roughly 5 minutes of opening the dashboard. This was a conscious speed-over-stability trade-off: periods this short mean more noise and more false flips, since an EMA(2)/RSI(3)-class reading has very little averaging behind it — but it's still built entirely from real live ticks, nothing backfilled or estimated. <b>5m / 30m / 1H</b> use standard periods (EMA 9/21/50, RSI 14, MACD 12/26/9, Bollinger 20, Stochastic 14/3/3) for a steadier read once you have a few minutes. <b>2H / 4H / 1D</b> use faster variants again (EMA 5/10/20, RSI 10, MACD 6/13/5, Bollinger 10, Stochastic 7/2/2) — the same logic traders use to compensate for higher timeframes otherwise taking days to accumulate enough bars. The dashboard opens on 1m by default and the Overall Recommendation leans on whichever timeframes are actually ready rather than waiting for all nine — so treat an early 1m-only read as a rough first pulse, and the picture on 5m/30m/1H a little later as the more reliable one.</p>
     <h4>Per-timeframe signal</h4>
     <p>Each open tab scores its own EMA trend, RSI, MACD, Bollinger %B, Stochastic, momentum z-score, and range position, exactly as in the single-timeframe version, producing that timeframe's own BUY/SELL/HOLD read and confidence.</p>
     <h4>Overall recommendation (top of page)</h4>
